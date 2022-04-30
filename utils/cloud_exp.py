@@ -3,7 +3,7 @@ import threading
 import sys
 
 user_name = "node"
-dir_base = "~/slice_multi_node_repair"
+dir_base = "~/mmain/slices_multi_node_repair"
 exp_loop = 1
 
 results = []
@@ -13,6 +13,8 @@ def send_one(index, program_flag):
     if program_flag:
         cmd = "scp ./build/bin/node_main {}@node{:0>2d}:{}/".format(user_name,
                                                                     index, dir_base)
+        # cmd = "scp ./src/* {}@node{:0>2d}:{}/src/".format(user_name,
+        #                                                             index, dir_base)
     else:
         cmd = "scp ./config/nodes_config.ini {}@node{:0>2d}:{}/config/".format(user_name,
                                                                                index, dir_base)
@@ -41,8 +43,8 @@ def update(n, update_type):
 
 
 def call_single_node(index):
-    cmd = "ssh {}@node{:0>2d} \"cd ;./node_main {}\"".format(
-        user_name, index, index)
+    cmd = "ssh {}@node{:0>2d} \"cd {};./node_main {}\"".format(
+        user_name, index, dir_base, index)
     get_bytes = subprocess.check_output(cmd, shell=True)
     result = get_bytes.decode('utf-8')
     results.append(float(result))

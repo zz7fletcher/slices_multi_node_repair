@@ -21,7 +21,7 @@ class TCPNode {
   uint sl_s;  //  size of one slice
   uint exp_size;
   uint N;
-  uint sl_N;  //  num of slices ===> (CHUNK_SIZE / sl_s)
+  ulong sl_N;  //  num of slices ===> (CHUNK_SIZE / sl_s)
   uint algorithm_type;
 
  public:

@@ -27,7 +27,8 @@ uint16_t TCPNode::parse_config(const std::string &fn) {
     config >> rs_k >> rs_m;
     N = rs_k + rs_m;
     // get the number of slices
-    sl_N = CHUNK_SIZE / SLICE_SIZE + (CHUNK_SIZE%SLICE_SIZE) ? 1 : 0;
+    sl_N = CHUNK_SIZE / SLICE_SIZE + ((CHUNK_SIZE%SLICE_SIZE) ? 1 : 0);
+    sl_N = 5;
   } else {
     std::cerr << "First line is k, m and N" << std::endl;
     exit(-1);
@@ -92,27 +93,27 @@ void TCPNode::start() {
   } else {
     client = new TCPClient(self_index, targets);
     std::thread cli_thr([&] { client->start_client(); });
-
-    uint i = 0, j = 0, cur_node_index = 0;
+    ulong i = 0;
+    int16_t j = 0, cur_node_index = 0;
+    /* tag: master node distribute tasks */
     std::vector<MigrationInfo> tasks;
     for (i = 0; i < sl_N; ++i) {
-      cur_node_index = i % node_num;
-      for (j = 0; j < node_num; ++j) {
+      cur_node_index = i % node_num + 1;
+      for (j = 1; j <= node_num; ++j) {
         if (cur_node_index == j) continue;
-        tasks.emplace_back(j, cur_node_index, i);
+        MigrationInfo task{j, cur_node_index, i};
+        if (task.source == task.target) {
+          std::cerr << "=== error task " << task.index << " , " << task.source
+                  << "->" << task.target << std::endl;
+          exit(-1);
+        }
+        std::cout << "adding task: s is " << task.source << ", t is " << task.target 
+            << ", sl_index is " << task.sl_index << std::endl;
+        client->add_task(std::move(task));
+        
       }
     }
 
-    // add the tasks from above
-    for (i = 0; i < sl_N; ++i) {
-      auto &task = tasks[i];
-      if (task.source == task.target) {
-        std::cerr << "=== error task " << task.index << " , " << task.source
-                  << "->" << task.target << std::endl;
-        exit(-1);
-      }
-      client->add_task(std::move(task));
-    }
     client->set_finished();
     cli_thr.join();
     std::cout << "tcp_node of master finished!" << std::endl;

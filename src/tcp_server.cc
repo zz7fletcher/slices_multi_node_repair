@@ -28,7 +28,7 @@ TCPServer::TCPServer(in_port_t _port, uint n, uint8_t k, uint8_t m,
               << std::endl;
     exit(-1);
   }
-  // std::cout << "Awaiting connections on port " << port << "..." << std::endl;
+  //std::cout << "TCPServer :Awaiting connections on port " << port << "..." << std::endl;
 }
 
 void TCPServer::receive_handler(sockpp::tcp_socket sock) {
@@ -73,14 +73,16 @@ void TCPServer::receive_handler(sockpp::tcp_socket sock) {
     //   w_worker.add_task(std::move(task));
     // }
     
-    // test
+    /* tag: tcpserver get the slice */
     char temp_info[50];
-    if (sock.read_n(temp_info, 50) <= 0) {
-      std::cerr << "server testing error: " << task.index << ": "
-                << +task.source << "->" << +task.target << std::endl;
-      exit(-1);
+    memset(temp_info, 0, 50);
+    ssize_t n, i = 0, remain = 50;
+    while(remain && (n = sock.read_n(temp_info + i, remain)) > 0) {
+      i += n;
+      remain -= n;
     }
     printf("get from client.%s\n", temp_info);
+    /* tag: when all the (node_num - 1) slices arriving, start repair */
   }
   sock.close();
 }
@@ -114,6 +116,7 @@ void TCPServer::wait_for_connection() {
   uint16_t i = 0;
   uint16_t client_index;
   while (i < serving_num) {
+    //std::cout << "tcpserver serving_index:" << i << std::endl;
     sockpp::inet_address peer;
     // Accept a new client connection
     sockpp::tcp_socket sock = acc.accept(&peer);
@@ -122,6 +125,7 @@ void TCPServer::wait_for_connection() {
                 << acc.last_error_str() << std::endl;
     } else {
       sock.read_n(&client_index, sizeof(client_index));  // get client index
+      //std::cout << "get client index:" << client_index << std::endl;
       if (client_index) {                                // for data node
         thr[i++] =
             std::thread(&TCPServer::receive_handler, this, std::move(sock));

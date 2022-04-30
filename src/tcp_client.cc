@@ -11,7 +11,7 @@ void TCPClient::connect_one(sockpp::inet_address sock_addr, uint16_t index) {
     std::this_thread::sleep_for(milliseconds(1));
   }
   cur_conn.write_n(&node_index, sizeof(node_index));
-  // std::cout << "connect_one: " << sock_addr << "\n";
+  //std::cout << "connect_one: " << sock_addr << "\n";
 }
 
 TCPClient::TCPClient(uint16_t i, const std::string &_host, in_port_t _port)
@@ -49,7 +49,7 @@ TCPClient::TCPClient(uint16_t i, std::vector<socket_address> &sa, uint thr_num)
       connect_thr[j].join();
     }
   }
-  // std::cout << "init TCPClient ok\n";
+  //std::cout << "init TCPClient ok\n";
 }
 
 void TCPClient::run() {
@@ -90,14 +90,17 @@ void TCPClient::run() {
       // }
       // fclose(f);
 
-      ssize_t n, i = 0, remain = SLICE_SIZE;
+      /* tag: tcpclient complete the transmission task */
+      ssize_t n;
       char temp_info[50];
-      sprintf(temp_info, "s:%d t:%d s_i:%d", task.source, task.target, task.sl_index);
-      if (cur_conn->write_n(temp_info, 50) == -1) {
+      memset(temp_info, 0, 50);
+      sprintf(temp_info, "s:%d t:%d s_i:%ld", task.source, task.target, task.sl_index);
+      if ((n = cur_conn->write_n(temp_info, 50)) == -1) {
         std::cerr << "client testing error: " << task.index << ": "
                 << +task.source << "->" << +task.target << std::endl;
         exit(-1);
       }
+      printf("client%d sending %ldB to server%d\n",task.source, n, task.target);
     }
   }
   delete[] buf;
@@ -139,7 +142,7 @@ void TCPClient::wait_start_flag(uint16_t index) {
 }
 
 void TCPClient::start_client() {
-  // std::cout << "TCPClient::start_client\n";
+  //std::cout << "TCPClient::start_client\n";
   if (req_mtxs) {
     std::thread wait_thrds[conn_num + 2];
     uint16_t i;

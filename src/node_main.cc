@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
 
   if (argv[1][0] != '0') {
     TCPNode node(strtoul(argv[1], nullptr, 10));
+    printf("node %ld start:\n", strtoul(argv[1], nullptr, 10));
     node.start();
   } else {
     uint algo_type = strtoul(argv[3], nullptr, 10);
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]) {
     }
     TCPNode node(strtoul(argv[1], nullptr, 10), strtoul(argv[2], nullptr, 10),
                  algo_type);
+    printf("node %ld start:\n", strtoul(argv[1], nullptr, 10));
     node.start();
 
     return 0;
